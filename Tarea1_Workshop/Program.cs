@@ -3,6 +3,7 @@ using Tarea1_Workshop;
 using Tarea1_Workshop.Data;
 using Tarea1_Workshop.Repoditory;
 using Tarea1_Workshop.Repoditory.Interface;
+using Tarea1_Workshop.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +20,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlSer
 builder.Services.AddAutoMapper(typeof(MappingConfig));
 builder.Services.AddScoped<ITeacherRepository, TeacherRepository>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+builder.Services.AddScoped<TeacherService>();
+builder.Services.AddScoped<StudentService>();
 
 var app = builder.Build();
 

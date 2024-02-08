@@ -140,3 +140,4 @@ C:\Users\fdani\OneDrive\Projects\Tarea1_Workshop\Tarea1_Workshop\obj\Debug\net8.
 C:\Users\fdani\OneDrive\Projects\Tarea1_Workshop\Tarea1_Workshop\obj\Debug\net8.0\Tarea1_Workshop.pdb
 C:\Users\fdani\OneDrive\Projects\Tarea1_Workshop\Tarea1_Workshop\obj\Debug\net8.0\Tarea1_Workshop.genruntimeconfig.cache
 C:\Users\fdani\OneDrive\Projects\Tarea1_Workshop\Tarea1_Workshop\obj\Debug\net8.0\ref\Tarea1_Workshop.dll
+C:\Users\fdani\OneDrive\Projects\Tarea1_Workshop\Tarea1_Workshop\obj\Debug\net8.0\Tarea1_Workshop.sourcelink.json

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Tarea1_Workshop.Repoditory.Interface;
 using Tarea1_Workshop.Models;
 using Tarea1_Workshop.Models.Dtos;
+using Tarea1_Workshop.Services;
 
 namespace Tarea1_Workshop.Controllers
 {
@@ -12,13 +13,13 @@ namespace Tarea1_Workshop.Controllers
     public class TeacherController : ControllerBase
     {
         public readonly ILogger<TeacherController> _logger;
-        public readonly ITeacherRepository _teacherRepo;
+        public readonly TeacherService _teacherService;
         public readonly IMapper _mapper;
         protected APIResponse _response;
-        public TeacherController(ILogger<TeacherController> logger, ITeacherRepository proyectoRepositorio, IMapper mapper)
+        public TeacherController(ILogger<TeacherController> logger, TeacherService teacherService, IMapper mapper)
         {
             _logger = logger;
-            _teacherRepo = proyectoRepositorio;
+            _teacherService = teacherService;
             _mapper = mapper;
             _response = new();
         }
@@ -29,11 +30,11 @@ namespace Tarea1_Workshop.Controllers
         {
             try
             {
-                _logger.LogInformation("Get all techers");
+                _logger.LogInformation("Get all teachers");
 
-                IEnumerable<Teacher> teachers = await _teacherRepo.GetAll();
+                IEnumerable<TeacherDto> teachers = await _teacherService.GetTeachers();
 
-                _response.Resultado = _mapper.Map<IEnumerable<TeacherDto>>(teachers);
+                _response.Result = teachers;
                 _response.StatusCode = HttpStatusCode.OK;
 
                 return Ok(_response);
@@ -61,7 +62,8 @@ namespace Tarea1_Workshop.Controllers
                     _response.IsExitoso = false;
                     return BadRequest(_response);
                 }
-                var teacher = await _teacherRepo.Get(t => t.Id == id);
+
+                var teacher = await _teacherService.GetTeacherById(id);
 
                 if (teacher == null)
                 {
@@ -70,7 +72,7 @@ namespace Tarea1_Workshop.Controllers
                     return NotFound(_response);
                 }
 
-                _response.Resultado = _mapper.Map<TeacherDto>(teacher);
+                _response.Result = teacher;
                 _response.StatusCode = HttpStatusCode.OK;
 
                 return Ok(_response);
@@ -96,25 +98,18 @@ namespace Tarea1_Workshop.Controllers
                     return BadRequest(ModelState);
                 }
 
-                if (await _teacherRepo.Get(t => t.Name.ToLower() == createDto.Name.ToLower()) != null)
+                var createdTeacher = await _teacherService.CreateTeacher(createDto);
+
+                if (createdTeacher == null)
                 {
-                    ModelState.AddModelError("TeacherExist", "This teacher alredy exist in the database");
+                    ModelState.AddModelError("TeacherExist", "This teacher already exists in the database");
                     return BadRequest(ModelState);
                 }
 
-                if (createDto == null)
-                {
-                    return BadRequest(createDto);
-                }
-
-                Teacher teacher = _mapper.Map<Teacher>(createDto);
-
-                await _teacherRepo.add(teacher);
-
-                _response.Resultado = teacher;
+                _response.Result = createdTeacher;
                 _response.StatusCode = HttpStatusCode.Created;
 
-                return CreatedAtRoute("GetTeacher", new { id = teacher.Id }, _response);
+                return CreatedAtRoute("GetTeacher", new { id = createdTeacher.Id }, _response);
             }
             catch (Exception ex)
             {
@@ -123,6 +118,7 @@ namespace Tarea1_Workshop.Controllers
             }
             return _response;
         }
+
 
         [HttpDelete("DeleteTeacher")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -138,14 +134,14 @@ namespace Tarea1_Workshop.Controllers
                     return BadRequest(_response);
                 }
 
-                var teacher = await _teacherRepo.Get(t => t.Id == id);
+                var isDeleted = await _teacherService.DeleteTeacher(id);
 
-                if (teacher == null)
+                if (!isDeleted)
                 {
                     _response.StatusCode = HttpStatusCode.NotFound;
                     return NotFound(_response);
                 }
-                await _teacherRepo.Remove(teacher);
+
                 _response.StatusCode = HttpStatusCode.NoContent;
 
                 return Ok(_response);
@@ -158,25 +154,41 @@ namespace Tarea1_Workshop.Controllers
             return BadRequest(_response);
         }
 
+
         [HttpPost("UpdateTeacher")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> UpdateTeacher(int id, [FromBody] TeacherUpdateDto UpdateDto)
+        public async Task<IActionResult> UpdateTeacher(int id, [FromBody] TeacherUpdateDto updateDto)
         {
-            if (UpdateDto == null || id != UpdateDto.Id)
+            try
+            {
+                if (updateDto == null || id != updateDto.Id)
+                {
+                    _response.IsExitoso = false;
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return BadRequest(_response);
+                }
+
+                var isUpdated = await _teacherService.UpdateTeacher(id, updateDto);
+
+                if (!isUpdated)
+                {
+                    _response.IsExitoso = false;
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    return NotFound(_response);
+                }
+
+                _response.StatusCode = HttpStatusCode.NoContent;
+
+                return Ok(_response);
+            }
+            catch (Exception ex)
             {
                 _response.IsExitoso = false;
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return BadRequest(_response);
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
             }
-
-            Teacher teacher = _mapper.Map<Teacher>(UpdateDto);
-
-            await _teacherRepo.Update(teacher);
-
-            _response.StatusCode = HttpStatusCode.NoContent;
-
-            return Ok(_response);
+            return BadRequest(_response);
         }
+
     }
 }
